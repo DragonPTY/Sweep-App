@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Sweep — Budget &amp; Payoff Planner</title>
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Bundler thumbnail: shown while the inlined assets unpack and as the no-JS fallback.
+       Tries to evoke the app's brand mark (rounded-square glyph) on the dark glass base. -->
+  <template id="__bundler_thumbnail" data-bg-color="#07090d">
+    <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#7c7ce6" />
+          <stop offset="1" stop-color="#a48bff" />
+        </linearGradient>
+      </defs>
+      <!-- Centered brand mark, ~40% of viewBox -->
+      <rect x="430" y="230" width="340" height="340" rx="78" fill="url(#g)" />
+      <rect x="535" y="335" width="130" height="130" rx="30" fill="#07090d" opacity="0.85" />
+    </svg>
+  </template>
+</head>
+<body data-theme="aurora">
+  <div class="ambient"><div class="orb3"></div></div>
+
+  <!-- Boot splash. Lives directly in HTML so it paints before React/Babel
+       finish transpiling the JSX bundle (which can take a moment on cold load).
+       Removed by the tiny script below as soon as the app mounts. -->
+  <div id="boot-splash" aria-hidden="true">
+    <div class="bs-track">
+      <span class="bs-dot"></span>
+      <span class="bs-dot"></span>
+      <span class="bs-dot"></span>
+      <span class="bs-dot"></span>
+    </div>
+  </div>
+
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <!-- Supabase JS v2 — auth + database client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+  <script type="text/babel" src="js/store.jsx"></script>
+  <script type="text/babel" src="js/compute.jsx"></script>
+  <script type="text/babel" src="js/ui.jsx"></script>
+  <script type="text/babel" src="js/tabs_core.jsx"></script>
+  <script type="text/babel" src="js/undo_toast.jsx"></script>
+  <script type="text/babel" src="js/people_manager.jsx"></script>
+  <script type="text/babel" src="js/sync.jsx"></script>
+  <script type="text/babel" src="js/tab_accounts.jsx"></script>
+  <script type="text/babel" src="js/tab_budget.jsx"></script>
+  <script type="text/babel" src="js/tab_transactions.jsx"></script>
+  <script type="text/babel" src="js/tabs_spend.jsx"></script>
+  <script type="text/babel" src="js/tabs_loan.jsx"></script>
+  <script type="text/babel" src="js/tabs_moves.jsx"></script>
+  <script type="text/babel" src="js/tab_dashboard.jsx"></script>
+  <script type="text/babel" src="js/modules.jsx"></script>
+  <script type="text/babel" src="js/tab_savings.jsx"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="js/app.jsx"></script>
+
+  <!-- Splash dismissal. We poll #root for its first child (= React has mounted
+       and rendered something) and then fade the splash out. Two safety nets:
+       a hard max-wait so a broken JSX file doesn't trap the user behind dots,
+       and a MutationObserver as the fast path. -->
+  <script>
+    (function () {
+      var splash = document.getElementById("boot-splash");
+      if (!splash) return;
+      var done = false;
+      function dismiss() {
+        if (done) return;
+        done = true;
+        splash.classList.add("bs-out");
+        setTimeout(function () { splash.remove(); }, 450);
+      }
+      var root = document.getElementById("root");
+      // Fast path: fire the moment React adds anything to #root.
+      if (root && "MutationObserver" in window) {
+        var mo = new MutationObserver(function () {
+          if (root.children.length > 0) { mo.disconnect(); dismiss(); }
+        });
+        mo.observe(root, { childList: true });
+      }
+      // Belt-and-braces: also poll, and bail out after 6s no matter what.
+      var start = Date.now();
+      var tick = setInterval(function () {
+        if (root && root.children.length > 0) { clearInterval(tick); dismiss(); return; }
+        if (Date.now() - start > 6000) { clearInterval(tick); dismiss(); }
+      }, 120);
+    })();
+  </script>
+</body>
+</html>
